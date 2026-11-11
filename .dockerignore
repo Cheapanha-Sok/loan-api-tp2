@@ -1,0 +1,18 @@
+# Git history and settings
+.git
+.gitignore
+# Virtual environments and Python caches
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+# Editor / dev-container config
+.vscode
+.devcontainer
+# Models trained on the host (the image trains its own)
+model.joblib
+models/
+# Secrets
+.env
+*.env
