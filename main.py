@@ -5,7 +5,7 @@ import os
 
 import joblib
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 
 from schemas import Application, ApplicationCreate, LoanFeatures, Prediction
@@ -76,10 +76,11 @@ def predict(features: LoanFeatures):
 
 
 @app.post("/api/v1/applications", response_model=Application, status_code=201)
-def create_application(body: ApplicationCreate):
+def create_application(body: ApplicationCreate, response: Response):
     new = Application(id=7781 + len(APPLICATIONS), status="pending",
                       prediction=score(body), **body.model_dump())
     APPLICATIONS[new.id] = new
+    response.headers["Location"] = f"/api/v1/applications/{new.id}"  # contract (Module 2): 201 + Location
     return new
 
 
