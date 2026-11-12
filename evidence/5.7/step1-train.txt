@@ -1,0 +1,33 @@
+2026/11/12 22:10:52 INFO mlflow.tracking.fluent: Experiment with name 'loan-default' does not exist. Creating a new experiment.
+2026/11/12 22:10:56 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+2026/11/12 22:10:58 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+2026/11/12 22:11:00 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+2026/11/12 22:11:03 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+2026/11/12 22:11:07 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+2026/11/12 22:11:10 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+2026/11/12 22:11:13 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+2026/11/12 22:11:17 WARNING mlflow.utils.environment: Failed to resolve installed pip version. ``pip`` will be added to conda.yaml environment spec without a version specifier.
+logreg {'C': 0.1, 'class_weight': None} auc=0.923 recall=0.707 precision=0.813
+🏃 View run logreg-C=0.1-class_weight=None at: http://127.0.0.1:5000/#/experiments/1/runs/a95a820e490e489286302d823d90be61
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1
+logreg {'C': 0.1, 'class_weight': 'balanced'} auc=0.923 recall=0.865 precision=0.610
+🏃 View run logreg-C=0.1-class_weight=balanced at: http://127.0.0.1:5000/#/experiments/1/runs/c59515e99fd04561be2c1d5252036a3f
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1
+logreg {'C': 1.0, 'class_weight': 'balanced'} auc=0.923 recall=0.865 precision=0.611
+🏃 View run logreg-C=1.0-class_weight=balanced at: http://127.0.0.1:5000/#/experiments/1/runs/9c89863436354c5297e98a6a2b9c97a6
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1
+forest {'max_depth': 4, 'class_weight': None} auc=0.917 recall=0.608 precision=0.877
+🏃 View run forest-max_depth=4-class_weight=None at: http://127.0.0.1:5000/#/experiments/1/runs/2ee3f49753c54842a7b0054553e875d9
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1
+forest {'max_depth': 8, 'class_weight': 'balanced'} auc=0.925 recall=0.788 precision=0.738
+🏃 View run forest-max_depth=8-class_weight=balanced at: http://127.0.0.1:5000/#/experiments/1/runs/0de7d0ea0eea44deb4ef53fe019288a0
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1
+forest {'max_depth': 12, 'class_weight': 'balanced'} auc=0.919 recall=0.761 precision=0.765
+🏃 View run forest-max_depth=12-class_weight=balanced at: http://127.0.0.1:5000/#/experiments/1/runs/e5e3cf83c010405d9e786e2a4867404c
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1
+gboost {'max_depth': 2, 'learning_rate': 0.1} auc=0.931 recall=0.721 precision=0.829
+🏃 View run gboost-max_depth=2-learning_rate=0.1 at: http://127.0.0.1:5000/#/experiments/1/runs/f5ec448fdde94643965b4e0d71ef60a3
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1
+gboost {'max_depth': 3, 'learning_rate': 0.05} auc=0.929 recall=0.730 precision=0.853
+🏃 View run gboost-max_depth=3-learning_rate=0.05 at: http://127.0.0.1:5000/#/experiments/1/runs/3645e2b8451b4330b398c1476f0e1238
+🧪 View experiment at: http://127.0.0.1:5000/#/experiments/1

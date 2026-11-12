@@ -1,4 +1,7 @@
-# Production image for the loan API (Lesson 4.6): multi-stage, slim, non-root, health-checked
+# Production image for the loan API (Lesson 4.6): multi-stage, slim, non-root, health-checked.
+# Module 6: a "test" stage runs pytest during the build, so a failing test fails the build and the
+# release never reaches Render (CI inside the build, because GitHub Actions is unavailable: see
+# evidence/6.7/github-actions-billing-lock.md).
 
 # ---------- Stage 1: builder (installs packages, trains the model) ----------
 FROM python:3.12-slim AS builder
@@ -10,7 +13,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY train.py .
 RUN python train.py --out /build/model.joblib
 
-# ---------- Stage 2: runtime (only what runs is shipped) ----------
+# ---------- Stage 2: test (pytest against the exact code and model that will ship) ----------
+FROM builder AS test
+RUN pip install --no-cache-dir pytest==9.1.1
+COPY main.py schemas.py ./
+COPY tests ./tests
+RUN MODEL_PATH=/build/model.joblib python -m pytest -v && touch /tests-passed
+
+# ---------- Stage 3: runtime (only what runs is shipped) ----------
 FROM python:3.12-slim
 # Apply Debian security updates that are newer than the base image (e.g. zlib1g, CVE-2026-85091)
 RUN apt-get update \
@@ -22,9 +32,14 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     MODEL_PATH=/app/model.joblib
+# Depending on the test stage forces it to run: no green tests, no image
+COPY --from=test /tests-passed /tmp/tests-passed
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /build/model.joblib ./model.joblib
 COPY main.py schemas.py ./
+# Commit stamp when built with --build-arg GIT_SHA=... (Lesson 6.5); on Render, RENDER_GIT_COMMIT is used
+ARG GIT_SHA=
+ENV GIT_SHA=$GIT_SHA
 USER appuser
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

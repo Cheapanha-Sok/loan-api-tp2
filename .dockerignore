@@ -16,3 +16,9 @@ models/
 # Secrets
 .env
 *.env
+# Local MLflow store and coursework evidence: not needed in the image
+mlflow.db
+mlartifacts/
+evidence/
+report/
+screenshots/

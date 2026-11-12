@@ -1,21 +1,47 @@
 """Loan Application Service: stores loan applications and scores their default risk."""
-import os
 from contextlib import asynccontextmanager
+import hmac
+import os
 
 import joblib
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from schemas import Application, ApplicationCreate, LoanFeatures, Prediction
 
-ml = {}            # filled at start-up: {"model": ..., "version": ..., "features": [...]}
+ml = {}            # filled at start-up: {"predict_proba": ..., "version": ..., "features": [...]}
 APPLICATIONS = {}  # in-memory store; resets when the server restarts
-MODEL_PATH = os.getenv("MODEL_PATH", "model.joblib")  # set MODEL_PATH to load a different model file
+MODEL_PATH = os.getenv("MODEL_PATH", "model.joblib")
+MODEL_NAME = os.getenv("MODEL_NAME", "loan-default")
+MODEL_ALIAS = os.getenv("MODEL_ALIAS", "champion")
+# The commit this build came from: GIT_SHA from a --build-arg, or RENDER_GIT_COMMIT, which Render
+# sets for every Git-backed deploy. "dev" locally.
+GIT_SHA = os.getenv("GIT_SHA") or os.getenv("RENDER_GIT_COMMIT") or "dev"
+API_KEY = os.getenv("API_KEY")  # unset locally and in CI: no key needed
+FEATURES = ["amount_usd", "term_months", "monthly_income_usd", "previous_loans", "late_payments"]
+
+
+def load_from_registry():
+    """Module 5: the champion from the MLflow registry (needs MLFLOW_TRACKING_URI)."""
+    import mlflow  # imported only here, so the production image does not need MLflow
+    from mlflow import MlflowClient
+    model = mlflow.pyfunc.load_model(f"models:/{MODEL_NAME}@{MODEL_ALIAS}")
+    version = MlflowClient().get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS).version
+    return {"predict_proba": model.predict, "version": version, "features": FEATURES}
+
+
+def load_from_file():
+    """Modules 4 and 6: the model file trained into the image (or by train.py)."""
+    bundle = joblib.load(MODEL_PATH)
+    return {"predict_proba": bundle["model"].predict_proba, "version": bundle["version"],
+            "features": bundle["features"]}
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    ml.update(joblib.load(MODEL_PATH))  # load the model once, when the server starts
+    # A tracking server is configured: use the registry. Otherwise (CI, Render): use the file.
+    ml.update(load_from_registry() if os.getenv("MLFLOW_TRACKING_URI") else load_from_file())
     yield
     ml.clear()
 
@@ -23,16 +49,25 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Loan Application Service", version="1.0.0", lifespan=lifespan)
 
 
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    if API_KEY and request.url.path.startswith("/api/"):
+        supplied = request.headers.get("x-api-key", "")
+        if not hmac.compare_digest(supplied.encode(), API_KEY.encode()):  # constant-time comparison
+            return JSONResponse(status_code=401, content={"detail": "Missing or invalid API key"})
+    return await call_next(request)
+
+
 def score(features: LoanFeatures) -> Prediction:
     X = pd.DataFrame([features.model_dump()])[ml["features"]]
-    probability = float(ml["model"].predict_proba(X)[0, 1])
+    probability = float(ml["predict_proba"](X)[0, 1])
     band = "low" if probability < 0.2 else "medium" if probability < 0.5 else "high"
     return Prediction(default_probability=round(probability, 3), risk_band=band, model_version=ml["version"])
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_version": ml.get("version")}
+    return {"status": "ok", "model_version": ml.get("version"), "git_sha": GIT_SHA}
 
 
 @app.post("/api/v1/predictions", response_model=Prediction)

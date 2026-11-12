@@ -1,0 +1,9 @@
+runName,model,auc,recall,precision,run_id
+logreg-C=0.1-class_weight=None,logreg,0.923,0.707,0.813,a95a820e490e489286302d823d90be61
+logreg-C=0.1-class_weight=balanced,logreg,0.923,0.865,0.61,c59515e99fd04561be2c1d5252036a3f
+logreg-C=1.0-class_weight=balanced,logreg,0.923,0.865,0.611,9c89863436354c5297e98a6a2b9c97a6
+forest-max_depth=4-class_weight=None,forest,0.917,0.608,0.877,2ee3f49753c54842a7b0054553e875d9
+forest-max_depth=8-class_weight=balanced,forest,0.925,0.788,0.738,0de7d0ea0eea44deb4ef53fe019288a0
+forest-max_depth=12-class_weight=balanced,forest,0.919,0.761,0.765,e5e3cf83c010405d9e786e2a4867404c
+gboost-max_depth=2-learning_rate=0.1,gboost,0.931,0.721,0.829,f5ec448fdde94643965b4e0d71ef60a3
+gboost-max_depth=3-learning_rate=0.05,gboost,0.929,0.73,0.853,3645e2b8451b4330b398c1476f0e1238

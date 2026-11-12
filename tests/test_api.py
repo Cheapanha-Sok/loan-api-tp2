@@ -1,4 +1,4 @@
-"""Run with: python train.py && pytest -v"""
+"""Run with: python train.py && pytest -v  (or with MLFLOW_TRACKING_URI set to use the registry)"""
 import pytest
 from fastapi.testclient import TestClient
 
@@ -15,7 +15,9 @@ def client():
 
 
 def test_health_reports_model_version(client):
-    assert client.get("/health").json() == {"status": "ok", "model_version": "1.0.0"}
+    body = client.get("/health").json()
+    assert body["status"] == "ok"
+    assert body["model_version"]  # "1.0.0" from the file, or a registry version such as "1"
 
 
 def test_prediction_is_a_probability(client):
@@ -37,3 +39,15 @@ def test_create_and_read_application(client):
 
 def test_missing_application_is_404(client):
     assert client.get("/api/v1/applications/99999").status_code == 404
+
+
+def test_health_reports_git_sha(client):
+    assert client.get("/health").json()["git_sha"]  # "dev" locally, the commit SHA in production
+
+
+def test_api_key_required_when_configured(client, monkeypatch):
+    monkeypatch.setattr("main.API_KEY", "test-key")
+    assert client.get("/health").status_code == 200                       # health stays open
+    assert client.get("/api/v1/applications").status_code == 401          # no key
+    assert client.get("/api/v1/applications", headers={"X-API-Key": "wrong"}).status_code == 401
+    assert client.get("/api/v1/applications", headers={"X-API-Key": "test-key"}).status_code == 200
