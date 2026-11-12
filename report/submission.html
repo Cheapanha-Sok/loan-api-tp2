@@ -1,0 +1,123 @@
+<!doctype html><meta charset="utf-8"><title>Task 5.7 submission</title><style>
+@page{size:A4;margin:14mm 13mm}
+body{font:10pt/1.45 system-ui,'Segoe UI',sans-serif;color:#1e1e1e}
+h1{font-size:18pt;margin:0 0 6pt} h2{font-size:13.5pt;margin:14pt 0 6pt;border-bottom:1.5px solid #ccc;padding-bottom:3pt}
+h3{font-size:11pt;margin:10pt 0 4pt} h2,h3{break-after:avoid}
+code{font:8.6pt ui-monospace,Consolas,monospace;background:#f1f3f5;padding:0 3px;border-radius:3px}
+pre{font:8pt/1.35 ui-monospace,Consolas,monospace;background:#f6f8fa;border:1px solid #ddd;padding:6pt;white-space:pre-wrap;break-inside:avoid}
+table{border-collapse:collapse;width:100%;margin:6pt 0;font-size:8.8pt} th,td{border:1px solid #999;padding:3pt 5pt;text-align:left;vertical-align:top}
+th{background:#f1f3f5} tr{break-inside:avoid}
+figure{margin:6pt 0;break-inside:avoid} img{max-width:100%;border:1px solid #ddd}
+a{color:#1971c2}
+</style>
+<h1>Task 5.7: Run the Full Model Lifecycle</h1>
+<p><b>Student:</b> Sok Cheapanha · <b>Course:</b> AI Engineering &amp; Deployment, Module 5 · <b>Repo:</b> <code>loan-api-tp2</code>, branch <code>module-5-mlflow</code></p>
+<p>Tracking server: <code>mlflow server --host 127.0.0.1 --port 5000 --backend-store-uri sqlite:///mlflow.db --artifacts-destination ./mlartifacts</code> (MLflow 3.17.1). Scoring server on port 5001, FastAPI loan service on port 8000.</p>
+<h2>Deliverables checklist</h2>
+<table><tr><th>#</th><th>Deliverable</th><th>Evidence in this report</th></tr>
+<tr><td>1</td><td>At least six tracked runs, two or more model types</td><td>8 runs, 3 model types: experiment table, comparison chart, MLflow runs screenshot (§1)</td></tr>
+<tr><td>2</td><td><code>loan-default</code> with 2+ versions, champion and challenger aliases, descriptions</td><td>Registry screenshot (§2)</td></tr>
+<tr><td>3</td><td>Promotion decision using recall, precision and AUC</td><td>Memo with run links (§3)</td></tr>
+<tr><td>4</td><td>MLflow scoring server tested, including a signature rejection</td><td>curl outputs (§4.1)</td></tr>
+<tr><td>5</td><td>FastAPI loads <code>@champion</code>; <code>/health</code> shows the registry version</td><td>Screenshot and curl (§4.2)</td></tr>
+<tr><td>6</td><td>Fourteen-day drift run with alert thresholds</td><td>Charts and alert plan (§5)</td></tr>
+<tr><td>7</td><td>Rollback performed and verified</td><td><code>/health</code> before and after (§6)</td></tr>
+</table>
+<h2>1. Experiment: eight tracked runs</h2>
+<p><code>train_tracked.py</code> extends Lesson 5.2 from 4 to 8 runs: three logistic regressions, three random forests and two gradient-boosting models. Every run logs its parameters, <code>auc</code>, <code>recall</code> and <code>precision</code> (threshold 0.5), <code>roc_curve.png</code> and the model with its signature and <code>pyfunc_predict_fn="predict_proba"</code>. Command: <code>python train_tracked.py</code> (with <code>MLFLOW_TRACKING_URI=http://127.0.0.1:5000</code>).</p>
+<table><tr><th>Run</th><th>Model</th><th>AUC</th><th>Recall</th><th>Precision</th></tr>
+<tr><td>logreg-C=0.1-class_weight=None</td><td>logreg</td><td>0.923</td><td>0.707</td><td>0.813</td></tr>
+<tr><td><b>logreg-C=0.1-class_weight=balanced</b> (v1, champion)</td><td>logreg</td><td>0.923</td><td><b>0.865</b></td><td>0.610</td></tr>
+<tr><td>logreg-C=1.0-class_weight=balanced</td><td>logreg</td><td>0.923</td><td>0.865</td><td>0.611</td></tr>
+<tr><td>forest-max_depth=4-class_weight=None</td><td>forest</td><td>0.917</td><td>0.608</td><td>0.877</td></tr>
+<tr><td><b>forest-max_depth=8-class_weight=balanced</b> (v2, challenger)</td><td>forest</td><td>0.925</td><td>0.788</td><td>0.738</td></tr>
+<tr><td>forest-max_depth=12-class_weight=balanced</td><td>forest</td><td>0.919</td><td>0.761</td><td>0.765</td></tr>
+<tr><td>gboost-max_depth=2-learning_rate=0.1</td><td>gboost</td><td><b>0.931</b></td><td>0.721</td><td>0.829</td></tr>
+<tr><td>gboost-max_depth=3-learning_rate=0.05</td><td>gboost</td><td>0.929</td><td>0.730</td><td>0.853</td></tr>
+</table>
+<figure><img src="runs_comparison.png" alt="Comparison chart"></figure>
+<figure><img src="screenshots/01-experiment-runs.png" alt="MLflow runs table"></figure>
+<h2>2. Registry: champion and challenger</h2>
+<p>Registered with <code>register.py</code> (same as <b>Register model</b> in the UI), with a description on the model and on each version:</p>
+<table><tr><th>Version</th><th>Alias</th><th>Source run</th><th>Description</th></tr>
+<tr><td>1</td><td><code>@champion</code></td><td><code>c59515e99fd04561be2c1d5252036a3f</code></td><td>Balanced logistic regression: highest recall (0.865) with AUC 0.923; catches the most defaulters.</td></tr>
+<tr><td>2</td><td><code>@challenger</code></td><td><code>0de7d0ea0eea44deb4ef53fe019288a0</code></td><td>Balanced random forest depth 8: AUC 0.925, recall 0.788, precision 0.738; fewer false alarms.</td></tr>
+</table>
+<figure><img src="screenshots/02-registry.jpg" alt="Registry"></figure>
+<h2>3. Promotion memo</h2>
+<p><b>Decision: version 1, the balanced logistic regression (<a href="http://127.0.0.1:5000/#/experiments/1/runs/c59515e99fd04561be2c1d5252036a3f">run c59515e9</a>), is <code>@champion</code>. Version 2, the balanced depth-8 random forest (<a href="http://127.0.0.1:5000/#/experiments/1/runs/0de7d0ea0eea44deb4ef53fe019288a0">run 0de7d0ea</a>), is <code>@challenger</code>.</b> For a microfinance lender, a missed defaulter (a lost principal) costs far more than a false alarm (a loan officer double-checks a good borrower), so recall is the primary metric. The balanced logistic regression catches 86.5% of defaulters, against 78.8% for the best forest and 72.1% for the gradient-boosting model with the top AUC (<a href="http://127.0.0.1:5000/#/experiments/1/runs/f5ec448fdde94643965b4e0d71ef60a3">run f5ec448f</a>, AUC 0.931). Its ranking quality is effectively the same (AUC 0.923 against 0.925 and 0.931), so the higher AUC elsewhere does not offset about 8 to 14 more percentage points of missed defaulters. The cost is precision, 0.610: about 4 in 10 flagged loans would have repaid, which is acceptable because a flag triggers a manual review, not an automatic rejection. The model is also simple and explainable to loan officers. The forest is the challenger because it is the best-balanced alternative (recall 0.788, precision 0.738). If review workload becomes the bottleneck, it is the first candidate to promote, and the rollback drill in §6 shows that switch takes one alias move.</p>
+<h2>4. Serve and integrate</h2>
+<h3>4.1 MLflow scoring server (port 5001)</h3>
+<p><code>mlflow models serve -m "models:/loan-default@champion" -p 5001 --env-manager local</code></p>
+<pre>$ curl http://127.0.0.1:5001/invocations  (two applicants)
+{&quot;predictions&quot;: [[0.9054017784694199, 0.09459822153058012], [0.002339021227680149, 0.9976609787723199]]}
+
+$ curl ... misspelled column late_payment            -&gt; HTTP 400 (signature REJECTS)
+{&quot;error_code&quot;: &quot;INVALID_PARAMETER_VALUE&quot;, ... &quot;Error: Model is missing inputs [&#x27;late_payments&#x27;].
+ Note that there were extra inputs: [&#x27;late_payment&#x27;].&quot;, &quot;error_class&quot;: &quot;SCHEMA_ENFORCEMENT_FAILED&quot;}
+
+$ curl ... amount_usd sent as text &quot;1500&quot;            -&gt; HTTP 200 (converted, accepted)
+{&quot;predictions&quot;: [[0.9054017784694199, 0.09459822153058012]]}
+
+$ curl ... amount_usd &quot;fifteen hundred&quot;              -&gt; HTTP 400 (signature REJECTS)
+{&quot;error_code&quot;: &quot;BAD_REQUEST&quot;, &quot;message&quot;: &quot;Invalid input. Data is not compatible with model signature.
+ Failed to convert column amount_usd to type &#x27;int64&#x27;. ...&quot;}</pre>
+<p>The signature blocks a missing column and an impossible type. It silently converts <code>"1500"</code> and knows nothing about the $5,000 limit, so business rules stay in FastAPI/Pydantic.</p>
+<h3>4.2 FastAPI loan service loading <code>@champion</code> (port 8000)</h3>
+<p><code>main.py</code> now loads <code>models:/loan-default@champion</code> in <code>lifespan</code> and reads the version from the registry (<code>MODEL_NAME</code> and <code>MODEL_ALIAS</code> can be overridden with environment variables). There is no file path and no version number in the code. <code>pytest</code>: <b>5 passed</b>.</p>
+<pre>$ curl http://127.0.0.1:8000/health
+{&quot;status&quot;:&quot;ok&quot;,&quot;model_version&quot;:&quot;1&quot;}
+$ curl -X POST http://127.0.0.1:8000/api/v1/predictions   (applicant 1)
+{&quot;default_probability&quot;:0.095,&quot;risk_band&quot;:&quot;low&quot;,&quot;model_version&quot;:&quot;1&quot;}
+$ curl -X POST http://127.0.0.1:8000/api/v1/predictions   (applicant 2)
+{&quot;default_probability&quot;:0.998,&quot;risk_band&quot;:&quot;high&quot;,&quot;model_version&quot;:&quot;1&quot;}</pre>
+<p><b>Same probability from both servers:</b> 0.0946 → 0.095 and 0.9977 → 0.998.</p>
+<figure><img src="screenshots/03-fastapi-health.png" alt="FastAPI /health"></figure>
+<h2>5. Monitor: 14-day drift run and alert thresholds</h2>
+<p><code>python monitor.py</code> scored 14 simulated days (400 applications per day, incomes falling $8 a day) with the champion and logged PSI per feature, the mean predicted default and the actual default rate to experiment <code>loan-default-monitoring</code>, run <a href="http://127.0.0.1:5000/#/experiments/2/runs/664035d464db44308b1cea1d00f719cb">daily-drift-check</a>.</p>
+<pre>day  1: income PSI=0.034 amount PSI=0.036 mean risk=0.363 actual=0.247
+day  5: income PSI=0.073 amount PSI=0.033 mean risk=0.375 actual=0.265
+day  6: income PSI=0.172 amount PSI=0.012 mean risk=0.380 actual=0.265
+day  7: income PSI=0.132 amount PSI=0.037 mean risk=0.391 actual=0.268
+day  8: income PSI=0.236 amount PSI=0.026 mean risk=0.387 actual=0.285
+day  9: income PSI=0.240 amount PSI=0.015 mean risk=0.420 actual=0.275
+day 10: income PSI=0.326 amount PSI=0.042 mean risk=0.438 actual=0.357
+day 11: income PSI=0.236 amount PSI=0.034 mean risk=0.377 actual=0.285
+day 14: income PSI=0.621 amount PSI=0.012 mean risk=0.414 actual=0.312</pre>
+<figure><img src="drift_chart.png" alt="Drift chart with thresholds"></figure>
+<figure><img src="screenshots/04-drift-metrics.jpg" alt="MLflow model metrics"></figure>
+<h3>Alert plan, justified from the chart</h3>
+<table><tr><th>Signal</th><th>Threshold</th><th>Why this value (from the chart)</th><th>Action</th><th>Fired in this run</th></tr>
+<tr><td><code>psi_monthly_income_usd</code></td><td><b>Warn &gt; 0.1 for 2 days in a row</b></td><td>Days 1–5 stay at 0.03–0.07 (sampling noise); day 6 (0.172) and day 7 (0.132) are the first two consecutive days above it</td><td>Notify the team; check field reports for floods or a harvest failure</td><td>Day 7</td></tr>
+<tr><td><code>psi_monthly_income_usd</code></td><td><b>Alert &gt; 0.2 for 2 days in a row</b></td><td>Days 8–9 (0.236, 0.240) cross it together and it never falls back below 0.2</td><td>Retrain on recent data, register as a new <code>@challenger</code>, compare, then promote</td><td>Day 9</td></tr>
+<tr><td><code>psi_amount_usd</code>, <code>psi_late_payments</code></td><td>Warn &gt; 0.1</td><td>They stay below 0.05 and 0.01 all period, so 0.1 cannot be reached by noise</td><td>Same as the income warning</td><td>Never</td></tr>
+<tr><td><code>mean_predicted_default</code></td><td><b>Alert &gt; 0.40 for 2 days in a row</b></td><td>Baseline is 0.35–0.37 on days 1–3; it passes 0.40 on days 9–10 (0.420, 0.438), confirming the income drift is reaching the predictions</td><td>Tell credit managers; review approval limits</td><td>Day 10</td></tr>
+<tr><td><code>actual_default_rate</code> (when outcomes arrive)</td><td>Recompute recall/AUC monthly; alert if recall &lt; 0.80</td><td>Defaults rose from about 0.25 to about 0.31</td><td>Retrain or promote the challenger</td><td>Months later</td></tr>
+</table>
+<p>Two consecutive days are required because single days are noisy: day 7 is lower than day 6, and day 11 drops back to 0.236 before rising again.</p>
+<h2>6. Rollback drill</h2>
+<p><code>move_alias.py &lt;version&gt;</code> moves <code>@champion</code> (the same as editing the alias in the UI); FastAPI is restarted after each move because it loads the model once, at start-up.</p>
+<pre>== BEFORE (champion -&gt; version 1) ==
+$ curl /health
+{&quot;status&quot;:&quot;ok&quot;,&quot;model_version&quot;:&quot;1&quot;}
+{&quot;default_probability&quot;:0.095,&quot;risk_band&quot;:&quot;low&quot;,&quot;model_version&quot;:&quot;1&quot;}
+
+== PROMOTE challenger: python move_alias.py 2, restart FastAPI ==
+$ curl /health
+{&quot;status&quot;:&quot;ok&quot;,&quot;model_version&quot;:&quot;2&quot;}
+{&quot;default_probability&quot;:0.062,&quot;risk_band&quot;:&quot;low&quot;,&quot;model_version&quot;:&quot;2&quot;}
+
+== ROLLBACK: python move_alias.py 1, restart FastAPI ==
+$ curl /health
+{&quot;status&quot;:&quot;ok&quot;,&quot;model_version&quot;:&quot;1&quot;}
+{&quot;default_probability&quot;:0.095,&quot;risk_band&quot;:&quot;low&quot;,&quot;model_version&quot;:&quot;1&quot;}</pre>
+<p>The live model changed twice and was restored with no code edit and no new image. The registry records every alias move.</p>
+<h2>Files added or changed in <code>loan-api</code></h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>data.py</code>, <code>psi.py</code></td><td>Shared synthetic data and the PSI function (Lessons 5.2 and 5.6)</td></tr>
+<tr><td><code>train_tracked.py</code></td><td>8 tracked runs across 3 model types</td></tr>
+<tr><td><code>register.py</code>, <code>move_alias.py</code></td><td>Register v1/v2 with aliases and descriptions; move <code>@champion</code></td></tr>
+<tr><td><code>monitor.py</code></td><td>14-day drift simulation logged with <code>step=day</code></td></tr>
+<tr><td><code>main.py</code>, <code>tests/test_api.py</code></td><td>API loads <code>models:/loan-default@champion</code>; health test reads the registry version</td></tr>
+<tr><td><code>requirements.txt</code>, <code>.gitignore</code></td><td><code>mlflow==3.17.1</code>; ignore <code>mlflow.db</code> and <code>mlartifacts/</code></td></tr>
+</table>

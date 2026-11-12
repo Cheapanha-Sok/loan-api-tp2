@@ -1,0 +1,12 @@
+Successfully registered model 'loan-default'.
+2026/11/12 22:11:31 INFO mlflow.store.model_registry.abstract_store: Waiting up to 300 seconds for model version to finish creation. Model name: loan-default, version 1
+Created version '1' of model 'loan-default'.
+Registered model 'loan-default' already exists. Creating a new version of this model...
+2026/11/12 22:11:31 INFO mlflow.store.model_registry.abstract_store: Waiting up to 300 seconds for model version to finish creation. Model name: loan-default, version 2
+Created version '2' of model 'loan-default'.
+loan-default v1 @champion <- run c59515e99fd04561be2c1d5252036a3f (logreg-C=0.1-class_weight=balanced)
+loan-default v2 @challenger <- run 0de7d0ea0eea44deb4ef53fe019288a0 (forest-max_depth=8-class_weight=balanced)
+version 2: aliases=[] run=0de7d0ea0eea44deb4ef53fe019288a0 | Balanced random forest depth 8: AUC 0.925, recall 0.788, precision 0.738; fewer false alarms.
+version 1: aliases=[] run=c59515e99fd04561be2c1d5252036a3f | Balanced logistic regression: highest recall (0.865) with AUC 0.923; catches the most defaulters.
+@champion -> version 1
+@challenger -> version 2

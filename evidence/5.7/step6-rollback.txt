@@ -1,0 +1,16 @@
+== BEFORE (champion -> version 1) ==
+$ curl /health
+{"status":"ok","model_version":"1"}
+{"default_probability":0.095,"risk_band":"low","model_version":"1"}
+
+== PROMOTE challenger: python move_alias.py 2, restart FastAPI ==
+champion -> version 2
+$ curl /health
+{"status":"ok","model_version":"2"}
+{"default_probability":0.062,"risk_band":"low","model_version":"2"}
+
+== ROLLBACK: python move_alias.py 1, restart FastAPI ==
+champion -> version 1
+$ curl /health
+{"status":"ok","model_version":"1"}
+{"default_probability":0.095,"risk_band":"low","model_version":"1"}

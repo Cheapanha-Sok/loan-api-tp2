@@ -1,0 +1,22 @@
+$ curl http://127.0.0.1:5001/invocations  (two applicants)
+{"predictions": [[0.9054017784694199, 0.09459822153058012], [0.002339021227680149, 0.9976609787723199]]}
+
+$ curl ... misspelled column late_payment  (signature REJECTS)
+{"error_code": "INVALID_PARAMETER_VALUE", "message": "Failed to predict data '   amount_usd  term_months  monthly_income_usd  previous_loans  late_payment\n0        1500           12               350.0               1             0'. \nError: Failed to enforce schema of data '   amount_usd  term_months  monthly_income_usd  previous_loans  late_payment\n0        1500           12               350.0               1             0' with schema '['amount_usd': long (required), 'term_months': long (required), 'monthly_income_usd': double (required), 'previous_loans': long (required), 'late_payments': long (required)]'. Error: Model is missing inputs ['late_payments']. Note that there were extra inputs: ['late_payment'].", "sqlstate": "KAM01", "error_class": "SCHEMA_ENFORCEMENT_FAILED"}
+HTTP 400
+
+$ curl ... amount_usd sent as "1500" text  (converted, accepted)
+{"predictions": [[0.9054017784694199, 0.09459822153058012]]}
+HTTP 200
+
+$ curl ... amount_usd "fifteen hundred"  (signature REJECTS)
+{"error_code": "BAD_REQUEST", "message": "Invalid input. Data is not compatible with model signature. Failed to convert column amount_usd to type 'int64'. Error: 'ValueError(\"invalid literal for int() with base 10: 'fifteen hundred'\")'", "sqlstate": "KAM00", "error_class": "INVALID_PARAMETER_VALUE"}
+HTTP 400
+
+$ curl http://127.0.0.1:8000/health
+{"status":"ok","model_version":"1"}
+
+$ curl -X POST http://127.0.0.1:8000/api/v1/predictions  (same applicant 1)
+{"default_probability":0.095,"risk_band":"low","model_version":"1"}
+$ curl -X POST http://127.0.0.1:8000/api/v1/predictions  (same applicant 2)
+{"default_probability":0.998,"risk_band":"high","model_version":"1"}

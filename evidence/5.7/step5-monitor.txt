@@ -1,0 +1,15 @@
+day  1: income PSI=0.034 amount PSI=0.036 mean risk=0.363 actual=0.247
+day  2: income PSI=0.053 amount PSI=0.030 mean risk=0.346 actual=0.225
+day  3: income PSI=0.066 amount PSI=0.007 mean risk=0.353 actual=0.225
+day  4: income PSI=0.069 amount PSI=0.039 mean risk=0.365 actual=0.255
+day  5: income PSI=0.073 amount PSI=0.033 mean risk=0.375 actual=0.265
+day  6: income PSI=0.172 amount PSI=0.012 mean risk=0.380 actual=0.265
+day  7: income PSI=0.132 amount PSI=0.037 mean risk=0.391 actual=0.268
+day  8: income PSI=0.236 amount PSI=0.026 mean risk=0.387 actual=0.285
+day  9: income PSI=0.240 amount PSI=0.015 mean risk=0.420 actual=0.275
+day 10: income PSI=0.326 amount PSI=0.042 mean risk=0.438 actual=0.357
+day 11: income PSI=0.236 amount PSI=0.034 mean risk=0.377 actual=0.285
+day 12: income PSI=0.355 amount PSI=0.018 mean risk=0.446 actual=0.320
+day 13: income PSI=0.513 amount PSI=0.016 mean risk=0.413 actual=0.318
+day 14: income PSI=0.621 amount PSI=0.012 mean risk=0.414 actual=0.312
+🏃 View run daily-drift-check at: http://127.0.0.1:5000/#/experiments/2/runs/664035d464db44308b1cea1d00f719cb
