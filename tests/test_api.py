@@ -52,3 +52,16 @@ def test_api_key_required_when_configured(client, monkeypatch):
     assert client.get("/api/v1/applications").status_code == 401          # no key
     assert client.get("/api/v1/applications", headers={"X-API-Key": "wrong"}).status_code == 401
     assert client.get("/api/v1/applications", headers={"X-API-Key": "test-key"}).status_code == 200
+
+
+RISKY = {"amount_usd": 5000, "term_months": 3, "monthly_income_usd": 200.0, "previous_loans": 0, "late_payments": 4}
+
+
+def test_risky_applicant_scores_higher_than_safe_applicant(client):
+    """Bad release drill (Lesson 6.7): an inverted probability passed every other test and went live.
+    A risky borrower must score higher than a safe one, and the band must agree with the probability."""
+    safe = client.post("/api/v1/predictions", json=GOOD).json()
+    risky = client.post("/api/v1/predictions", json=RISKY).json()
+    assert risky["default_probability"] > safe["default_probability"]
+    assert safe["risk_band"] == "low" and safe["default_probability"] < 0.2
+    assert risky["risk_band"] == "high" and risky["default_probability"] >= 0.5
