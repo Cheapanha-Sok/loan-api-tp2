@@ -1,0 +1,26 @@
+## Before the bad release
+17:08:07 UTC health: {"status":"ok","model_version":"1.0.0","git_sha":"646bfaf8fea43904bb449a5776930d01317943f1"}
+  safe  (1500 USD/12m, income 350, 0 late): {"default_probability":0.095,"risk_band":"low","model_version":"1.0.0"}
+  risky (5000 USD/3m,  income 200, 4 late): {"default_probability":1.0,"risk_band":"high","model_version":"1.0.0"}
+
+## Bad release (PR #5) merged
+Waiting for https://loan-api-cheapanha.onrender.com to report 6316fd7e6d34847323c4b77b9da2606c6ce1b324 (merged 2026-11-13 00:09:04)
+Deployed and healthy: 6316fd7e6d34847323c4b77b9da2606c6ce1b324
+Merge to live: 1 min 5 s
+17:10:09 UTC health: {"status":"ok","model_version":"1.0.0","git_sha":"6316fd7e6d34847323c4b77b9da2606c6ce1b324"}
+  safe  (1500 USD/12m, income 350, 0 late): {"default_probability":0.905,"risk_band":"low","model_version":"1.0.0"}
+  risky (5000 USD/3m,  income 200, 4 late): {"default_probability":0.0,"risk_band":"high","model_version":"1.0.0"}
+
+## Rollback in Render (Events -> Rollback to 646bfaf) clicked at 17:10:48 UTC
+Recovered (live SHA 646bfaf) at 17:11:36 UTC: rollback to recovered 48 s
+17:11:36 UTC health: {"status":"ok","model_version":"1.0.0","git_sha":"646bfaf8fea43904bb449a5776930d01317943f1"}
+  safe  (1500 USD/12m, income 350, 0 late): {"default_probability":0.095,"risk_band":"low","model_version":"1.0.0"}
+  risky (5000 USD/3m,  income 200, 4 late): {"default_probability":1.0,"risk_band":"high","model_version":"1.0.0"}
+
+## Fix forward (PR #6: restore + new test) merged
+Waiting for https://loan-api-cheapanha.onrender.com to report 771b35729380301e28e23b13a3d323ee0badbeda (merged 2026-11-13 00:13:42)
+Deployed and healthy: 771b35729380301e28e23b13a3d323ee0badbeda
+Merge to live: 1 min 10 s
+17:14:52 UTC health: {"status":"ok","model_version":"1.0.0","git_sha":"771b35729380301e28e23b13a3d323ee0badbeda"}
+  safe  (1500 USD/12m, income 350, 0 late): {"default_probability":0.095,"risk_band":"low","model_version":"1.0.0"}
+  risky (5000 USD/3m,  income 200, 4 late): {"default_probability":1.0,"risk_band":"high","model_version":"1.0.0"}

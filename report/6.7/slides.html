@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Loan API capstone slides</title>
+<style>
+@page{size:1280px 720px;margin:0}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,'Segoe UI',sans-serif;color:#1d2433;background:#fff}
+section{width:1280px;height:720px;padding:56px 72px;position:relative;page-break-after:always;overflow:hidden}
+section:last-child{page-break-after:auto}
+h1{font-size:46px;margin:0 0 12px;letter-spacing:-.5px}
+h2{font-size:34px;margin:0 0 26px;color:#14213d}
+.kicker{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#2a7f62;margin-bottom:12px}
+p,li{font-size:22px;line-height:1.45}
+ul{margin:0;padding-left:26px} li{margin:0 0 12px}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.88em;background:#eef2f6;padding:1px 6px;border-radius:4px}
+.foot{position:absolute;left:72px;right:72px;bottom:28px;font-size:13px;color:#7a8394;display:flex;justify-content:space-between}
+.title{background:#14213d;color:#fff}
+.title h1{font-size:58px;margin-top:150px;color:#fff}
+.title p{color:#c9d3e6;font-size:24px}
+.title .kicker{color:#7fd1ae}
+.title .foot{color:#9fb0cf}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:10px}
+.stat{border:1px solid #d9dfe8;border-radius:12px;padding:22px 20px}
+.stat b{display:block;font-size:44px;color:#14213d;margin-bottom:6px}
+.stat span{font-size:17px;color:#4a5468;line-height:1.35;display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+.box{border-left:5px solid #2a7f62;background:#f4f8f6;padding:18px 22px;border-radius:0 10px 10px 0}
+.box.warn{border-color:#c77d14;background:#fbf6ee}
+.box p{font-size:19px;margin:0}
+.box h3{margin:0 0 8px;font-size:20px}
+table{border-collapse:collapse;width:100%;font-size:18px}
+td,th{border-bottom:1px solid #dde3ea;padding:9px 10px;text-align:left}
+th{color:#4a5468;font-weight:600}
+.bad{color:#b42318;font-weight:700} .good{color:#2a7f62;font-weight:700}
+</style></head><body>
+
+<section class="title">
+  <div class="kicker">AI Engineering &amp; Deployment · Capstone 6.7</div>
+  <h1>Loan risk API:<br>from code to production</h1>
+  <p>A microfinance default-risk model, served by FastAPI, tested, built and deployed on every merge, and protected by a test for the bug that once shipped.</p>
+  <p style="margin-top:40px;font-size:20px">Sok Cheapanha · loan-api-cheapanha.onrender.com · github.com/Cheapanha-Sok/loan-api-tp2</p>
+  <div class="foot"><span>13 November 2026</span><span>1 / 7</span></div>
+</section>
+
+<section>
+  <div class="kicker">Architecture</div>
+  <h2>Contract → service → image → lifecycle → pipeline</h2>
+  <svg width="1136" height="470" viewBox="0 0 1136 470" font-family="system-ui,Segoe UI,sans-serif">
+    <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0L10,5L0,10z" fill="#4a5468"/></marker></defs>
+    <g font-size="17">
+      <rect x="0" y="40" width="170" height="86" rx="10" fill="#eef2f6" stroke="#9aa6b8"/>
+      <text x="85" y="76" text-anchor="middle" font-weight="700">Developer</text>
+      <text x="85" y="102" text-anchor="middle" fill="#4a5468">branch → PR</text>
+
+      <rect x="230" y="40" width="190" height="86" rx="10" fill="#eef2f6" stroke="#9aa6b8"/>
+      <text x="325" y="76" text-anchor="middle" font-weight="700">GitHub main</text>
+      <text x="325" y="102" text-anchor="middle" fill="#4a5468">merge = release</text>
+
+      <rect x="480" y="10" width="420" height="190" rx="12" fill="#f4f8f6" stroke="#2a7f62" stroke-width="2"/>
+      <text x="690" y="38" text-anchor="middle" font-weight="700" fill="#2a7f62">Render build · Dockerfile.prod</text>
+      <rect x="500" y="56" width="120" height="66" rx="8" fill="#fff" stroke="#9aa6b8"/>
+      <text x="560" y="84" text-anchor="middle" font-weight="600">1 builder</text>
+      <text x="560" y="106" text-anchor="middle" font-size="14" fill="#4a5468">pip + train.py</text>
+      <rect x="630" y="56" width="120" height="66" rx="8" fill="#fff" stroke="#2a7f62" stroke-width="2"/>
+      <text x="690" y="84" text-anchor="middle" font-weight="600">2 test</text>
+      <text x="690" y="106" text-anchor="middle" font-size="14" fill="#4a5468">pytest (8)</text>
+      <rect x="760" y="56" width="120" height="66" rx="8" fill="#fff" stroke="#9aa6b8"/>
+      <text x="820" y="84" text-anchor="middle" font-weight="600">3 runtime</text>
+      <text x="820" y="106" text-anchor="middle" font-size="14" fill="#4a5468">slim, non-root</text>
+      <text x="690" y="160" text-anchor="middle" font-size="15" fill="#b42318">red test → build fails → nothing deploys</text>
+      <text x="690" y="184" text-anchor="middle" font-size="15" fill="#4a5468">health check /health gates the switch</text>
+
+      <rect x="960" y="40" width="176" height="86" rx="10" fill="#14213d"/>
+      <text x="1048" y="76" text-anchor="middle" font-weight="700" fill="#fff">Live API</text>
+      <text x="1048" y="102" text-anchor="middle" fill="#c9d3e6">HTTPS · grade A</text>
+
+      <line x1="170" y1="83" x2="226" y2="83" stroke="#4a5468" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="420" y1="83" x2="476" y2="83" stroke="#4a5468" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="620" y1="89" x2="628" y2="89" stroke="#4a5468" stroke-width="2"/>
+      <line x1="750" y1="89" x2="758" y2="89" stroke="#4a5468" stroke-width="2"/>
+      <line x1="900" y1="83" x2="956" y2="83" stroke="#4a5468" stroke-width="2" marker-end="url(#a)"/>
+
+      <rect x="960" y="250" width="176" height="96" rx="10" fill="#eef2f6" stroke="#9aa6b8"/>
+      <text x="1048" y="284" text-anchor="middle" font-weight="700">Clients</text>
+      <text x="1048" y="308" text-anchor="middle" font-size="15" fill="#4a5468">X-API-Key on /api/*</text>
+      <text x="1048" y="330" text-anchor="middle" font-size="15" fill="#4a5468">key only in Render env</text>
+      <line x1="1048" y1="250" x2="1048" y2="130" stroke="#4a5468" stroke-width="2" marker-end="url(#a)"/>
+
+      <rect x="480" y="250" width="420" height="96" rx="10" fill="#eef2f6" stroke="#9aa6b8"/>
+      <text x="690" y="282" text-anchor="middle" font-weight="700">FastAPI service (Modules 2–3)</text>
+      <text x="690" y="306" text-anchor="middle" font-size="15" fill="#4a5468">applications · predictions · /health {git_sha}</text>
+      <text x="690" y="328" text-anchor="middle" font-size="15" fill="#4a5468">Pydantic limits from the contract: 100–5000 USD</text>
+
+      <rect x="0" y="250" width="420" height="96" rx="10" fill="#eef2f6" stroke="#9aa6b8"/>
+      <text x="210" y="282" text-anchor="middle" font-weight="700">MLflow lifecycle (Module 5)</text>
+      <text x="210" y="306" text-anchor="middle" font-size="15" fill="#4a5468">8 runs · loan-default @champion · drift PSI alerts</text>
+      <text x="210" y="328" text-anchor="middle" font-size="15" fill="#4a5468">registry if MLFLOW_TRACKING_URI, else model.joblib</text>
+      <line x1="420" y1="298" x2="476" y2="298" stroke="#4a5468" stroke-width="2" marker-end="url(#a)"/>
+
+      <text x="0" y="410" font-size="18" fill="#1d2433"><tspan font-weight="700">Verify:</tspan> scripts/verify.sh polls /health until git_sha = merged commit, prints merge-to-live.</text>
+      <text x="0" y="442" font-size="18" fill="#1d2433"><tspan font-weight="700">Rollback:</tspan> Render Events → Rollback to an earlier SHA, then fix forward through a PR.</text>
+    </g>
+  </svg>
+  <div class="foot"><span>Free stack, no payment card: GitHub + Render free plan</span><span>2 / 7</span></div>
+</section>
+
+<section>
+  <div class="kicker">Results</div>
+  <h2>The pipeline in numbers</h2>
+  <div class="grid">
+    <div class="stat"><b>1:05</b><span>merge to live for the real improvement (PR #2, contract's <code>Location</code> header)</span></div>
+    <div class="stat"><b>48 s</b><span>rollback to recovered after the bad release (drill part 2)</span></div>
+    <div class="stat"><b>A</b><span>SSL Labs grade, TLS 1.2 and 1.3 only, auto-renewed certificate</span></div>
+    <div class="stat"><b>0</b><span>hand deploys; 0 secrets in Git, image or logs</span></div>
+  </div>
+  <table style="margin-top:34px">
+    <tr><th>PR</th><th>Change</th><th>Outcome</th></tr>
+    <tr><td>#2</td><td>Add <code>Location</code> header (contract)</td><td class="good">live in 1 min 5 s</td></tr>
+    <tr><td>#3</td><td>Drill 1: loan limit 9000</td><td class="good">build failed at pytest, never live</td></tr>
+    <tr><td>#5</td><td>Drill 2: inverted probability</td><td class="bad">live 1 min 27 s, then rolled back</td></tr>
+    <tr><td>#6</td><td>Fix forward + new test</td><td class="good">live in 1 min 10 s; same bug now fails the build</td></tr>
+  </table>
+  <div class="foot"><span>Times measured by verify.sh from the merge commit to the live git_sha</span><span>3 / 7</span></div>
+</section>
+
+<section>
+  <div class="kicker">One design decision I would defend</div>
+  <h2>Run the tests inside the image build</h2>
+  <div class="two">
+    <div>
+      <ul>
+        <li>The <code>test</code> stage in <code>Dockerfile.prod</code> runs pytest against the <b>exact code and model file</b> that will ship.</li>
+        <li>The runtime stage copies a marker from it, so a red test means <b>no image and no deploy</b>, on any builder.</li>
+        <li>Proven in drill 1: PR #3 merged, Render build failed, production stayed on the old SHA.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box"><h3>Why it matters</h3><p>When GitHub Actions was locked by a billing issue, the release gate did not disappear with it. CI moved into the artifact itself, so the guarantee "only tested code goes live" held without any CI service.</p></div>
+      <div class="box" style="margin-top:18px"><h3>Plus: deploys are verified by commit</h3><p><code>/health</code> reports <code>git_sha</code>; "healthy" alone is not proof, because the old version is healthy too.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Lessons 6.2 and 6.5, adapted</span><span>4 / 7</span></div>
+</section>
+
+<section>
+  <div class="kicker">One trade-off I accepted</div>
+  <h2>Render's free Git pipeline instead of the full GitHub pipeline</h2>
+  <div class="two">
+    <div class="box"><h3>What I gained</h3><p>A working, automatic test → build → deploy → health-check pipeline the same day, at zero cost, with HTTPS, logs and one-click rollback, despite the account lock.</p></div>
+    <div class="box warn"><h3>What I gave up</h3><p>No branch protection (it needs a CI status check), no SHA-tagged images in GHCR, and verify runs from my terminal instead of a CI job. Render rebuilds on every deploy, and a rollback switches auto-deploy off until re-enabled.</p></div>
+  </div>
+  <ul style="margin-top:30px">
+    <li>Also accepted: free-plan <b>cold starts</b> (about a minute after 15 idle minutes) and an <b>in-memory</b> application store that resets on every deploy.</li>
+    <li>Fine for a course project; a paying lender would get a paid instance and PostgreSQL.</li>
+  </ul>
+  <div class="foot"><span>ci.yml and publish.yml stay in the repo, ready for when Actions is unlocked</span><span>5 / 7</span></div>
+</section>
+
+<section>
+  <div class="kicker">Break and recover</div>
+  <h2>Tests only catch what they check</h2>
+  <table>
+    <tr><th>Time (UTC)</th><th>Event</th><th>Safe applicant</th><th>Risky applicant</th></tr>
+    <tr><td>17:08</td><td>Before</td><td>0.095 · low</td><td>1.0 · high</td></tr>
+    <tr><td>17:10:09</td><td>Inverted score live (all 7 tests passed)</td><td class="bad">0.905 · low</td><td class="bad">0.0 · high</td></tr>
+    <tr><td>17:10:48</td><td>Rollback clicked in Render</td><td></td><td></td></tr>
+    <tr><td>17:11:36</td><td>Recovered (48 s)</td><td>0.095 · low</td><td>1.0 · high</td></tr>
+  </table>
+  <div class="box" style="margin-top:28px"><h3>The real fix</h3><p><code>test_risky_applicant_scores_higher_than_safe_applicant</code>: a risky borrower must score higher than a safe one and the band must agree with the probability. It fails on the inverted code (1 failed, 7 passed), so the same mistake can never ship again.</p></div>
+  <div class="foot"><span>Drill part 1 (limit 9000) never reached users: the build failed at pytest</span><span>6 / 7</span></div>
+</section>
+
+<section>
+  <div class="kicker">What I would build next</div>
+  <h2>Next steps</h2>
+  <ul>
+    <li><b>Restore the GitHub pipeline</b> once Support lifts the lock: <code>pipeline.yml</code>, branch protection requiring <code>test</code>, SHA-tagged images in GHCR, and a manual approval environment before production.</li>
+    <li><b>PostgreSQL</b> for applications, then the missing contract endpoints: pagination, approve / reject, the borrower view.</li>
+    <li><b>Hosted MLflow</b> so the live API loads <code>@champion</code> from the registry and promotions need no rebuild.</li>
+    <li><b>Automate the drift alerts</b>: a daily job computing PSI from live traffic, alerting at 0.1 / 0.2.</li>
+    <li><b>More model-behaviour tests</b> (monotonic risk in late payments and income), the class of bug the drill exposed.</li>
+  </ul>
+  <div class="foot"><span>Thank you · questions</span><span>7 / 7</span></div>
+</section>
+</body></html>

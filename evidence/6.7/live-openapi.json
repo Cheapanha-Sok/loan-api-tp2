@@ -1,0 +1,462 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Loan Application Service",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/health": {
+            "get": {
+                "summary": "Health",
+                "operationId": "health_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/predictions": {
+            "post": {
+                "summary": "Predict",
+                "operationId": "predict_api_v1_predictions_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoanFeatures"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Prediction"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/applications": {
+            "get": {
+                "summary": "List Applications",
+                "operationId": "list_applications_api_v1_applications_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/Application"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List Applications Api V1 Applications Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create Application",
+                "operationId": "create_application_api_v1_applications_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplicationCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Application"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/applications/{application_id}": {
+            "get": {
+                "summary": "Get Application",
+                "operationId": "get_application_api_v1_applications__application_id__get",
+                "parameters": [
+                    {
+                        "name": "application_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Application Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Application"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Application": {
+                "properties": {
+                    "amount_usd": {
+                        "type": "integer",
+                        "maximum": 5000.0,
+                        "minimum": 100.0,
+                        "title": "Amount Usd",
+                        "examples": [
+                            1500
+                        ]
+                    },
+                    "term_months": {
+                        "type": "integer",
+                        "enum": [
+                            3,
+                            6,
+                            12,
+                            18,
+                            24
+                        ],
+                        "title": "Term Months",
+                        "examples": [
+                            12
+                        ]
+                    },
+                    "monthly_income_usd": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Monthly Income Usd",
+                        "examples": [
+                            350.0
+                        ]
+                    },
+                    "previous_loans": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Previous Loans",
+                        "examples": [
+                            1
+                        ]
+                    },
+                    "late_payments": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Late Payments",
+                        "examples": [
+                            0
+                        ]
+                    },
+                    "borrower_id": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Borrower Id",
+                        "examples": [
+                            1042
+                        ]
+                    },
+                    "id": {
+                        "type": "integer",
+                        "title": "Id"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected"
+                        ],
+                        "title": "Status"
+                    },
+                    "prediction": {
+                        "$ref": "#/components/schemas/Prediction"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "amount_usd",
+                    "term_months",
+                    "monthly_income_usd",
+                    "previous_loans",
+                    "late_payments",
+                    "borrower_id",
+                    "id",
+                    "status",
+                    "prediction"
+                ],
+                "title": "Application"
+            },
+            "ApplicationCreate": {
+                "properties": {
+                    "amount_usd": {
+                        "type": "integer",
+                        "maximum": 5000.0,
+                        "minimum": 100.0,
+                        "title": "Amount Usd",
+                        "examples": [
+                            1500
+                        ]
+                    },
+                    "term_months": {
+                        "type": "integer",
+                        "enum": [
+                            3,
+                            6,
+                            12,
+                            18,
+                            24
+                        ],
+                        "title": "Term Months",
+                        "examples": [
+                            12
+                        ]
+                    },
+                    "monthly_income_usd": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Monthly Income Usd",
+                        "examples": [
+                            350.0
+                        ]
+                    },
+                    "previous_loans": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Previous Loans",
+                        "examples": [
+                            1
+                        ]
+                    },
+                    "late_payments": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Late Payments",
+                        "examples": [
+                            0
+                        ]
+                    },
+                    "borrower_id": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Borrower Id",
+                        "examples": [
+                            1042
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "amount_usd",
+                    "term_months",
+                    "monthly_income_usd",
+                    "previous_loans",
+                    "late_payments",
+                    "borrower_id"
+                ],
+                "title": "ApplicationCreate"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LoanFeatures": {
+                "properties": {
+                    "amount_usd": {
+                        "type": "integer",
+                        "maximum": 5000.0,
+                        "minimum": 100.0,
+                        "title": "Amount Usd",
+                        "examples": [
+                            1500
+                        ]
+                    },
+                    "term_months": {
+                        "type": "integer",
+                        "enum": [
+                            3,
+                            6,
+                            12,
+                            18,
+                            24
+                        ],
+                        "title": "Term Months",
+                        "examples": [
+                            12
+                        ]
+                    },
+                    "monthly_income_usd": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Monthly Income Usd",
+                        "examples": [
+                            350.0
+                        ]
+                    },
+                    "previous_loans": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Previous Loans",
+                        "examples": [
+                            1
+                        ]
+                    },
+                    "late_payments": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Late Payments",
+                        "examples": [
+                            0
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "amount_usd",
+                    "term_months",
+                    "monthly_income_usd",
+                    "previous_loans",
+                    "late_payments"
+                ],
+                "title": "LoanFeatures"
+            },
+            "Prediction": {
+                "properties": {
+                    "default_probability": {
+                        "type": "number",
+                        "title": "Default Probability"
+                    },
+                    "risk_band": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high"
+                        ],
+                        "title": "Risk Band"
+                    },
+                    "model_version": {
+                        "type": "string",
+                        "title": "Model Version"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "default_probability",
+                    "risk_band",
+                    "model_version"
+                ],
+                "title": "Prediction"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}
