@@ -1,0 +1,9 @@
+Waiting for https://loan-api-cheapanha.onrender.com to report 7934ac540ec17bdb248847e974d4994ca9f30dca (merged 2026-11-12 23:50:01)
+Live version is '268c66d374f2dcff511ac7b7219f70d14f460af0', waiting (1/45)
+Live version is '268c66d374f2dcff511ac7b7219f70d14f460af0', waiting (2/45)
+Live version is '268c66d374f2dcff511ac7b7219f70d14f460af0', waiting (3/45)
+Deployed and healthy: 7934ac540ec17bdb248847e974d4994ca9f30dca
+Merge to live: 1 min 5 s
+HTTP/2 201 
+location: /api/v1/applications/7781
+{"amount_usd":1500,"term_months":12,"monthly_income_usd":350.0,"previous_loans":1,"late_payments":0,"borrower_id":1042,"id":7781,"status":"pending","prediction":{"default_probability":0.095,"risk_band":"low","model_version":"1.0.0"}}

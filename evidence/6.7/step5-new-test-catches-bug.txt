@@ -1,0 +1,4 @@
+# New test run against the inverted-score code (drill part 2 bug re-applied locally):
+FAILED tests/test_api.py::test_risky_applicant_scores_higher_than_safe_applicant
+1 failed, 7 passed in 1.33s
+# Same test suite on the fix-forward code: 8 passed

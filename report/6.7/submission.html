@@ -1,0 +1,157 @@
+<!doctype html><meta charset="utf-8"><title>Task 6.7 submission</title><style>
+@page{size:A4;margin:14mm 13mm}
+body{font:10pt/1.45 system-ui,'Segoe UI',sans-serif;color:#1e1e1e}
+h1{font-size:18pt;margin:0 0 6pt} h2{font-size:13.5pt;margin:14pt 0 6pt;border-bottom:1.5px solid #ccc;padding-bottom:3pt}
+h3{font-size:11pt;margin:10pt 0 4pt} h2,h3{break-after:avoid}
+code{font:8.6pt ui-monospace,Consolas,monospace;background:#f1f3f5;padding:0 3px;border-radius:3px}
+pre{font:8pt/1.35 ui-monospace,Consolas,monospace;background:#f6f8fa;border:1px solid #ddd;padding:6pt;white-space:pre-wrap;break-inside:avoid}
+table{border-collapse:collapse;width:100%;margin:6pt 0;font-size:8.8pt} th,td{border:1px solid #999;padding:3pt 5pt;text-align:left;vertical-align:top}
+th{background:#f1f3f5} tr{break-inside:avoid}
+figure{margin:6pt 0;break-inside:avoid} img{max-width:100%;border:1px solid #ddd}
+a{color:#1971c2}
+</style>
+<h1>Task 6.7: Capstone, From Code to Production</h1>
+<p><b>Student:</b> Sok Cheapanha · <b>Course:</b> AI Engineering &amp; Deployment, Module 6 · <b>Date:</b> 12–13 November 2026</p>
+<table><tr><th>Repository</th><th>https://github.com/Cheapanha-Sok/loan-api-tp2 (public, branch <code>main</code>)</th></tr>
+<tr><td>Live app</td><td>https://loan-api-cheapanha.onrender.com (<a href="https://loan-api-cheapanha.onrender.com/docs">/docs</a>, <a href="https://loan-api-cheapanha.onrender.com/health">/health</a>)</td></tr>
+<tr><td>Host</td><td>Render free web service, Singapore, built from <code>Dockerfile.prod</code>, auto-deploy on every commit to <code>main</code></td></tr>
+<tr><td>Live version at submission</td><td><code>git_sha</code> <code>771b357</code> (PR #6), model <code>1.0.0</code></td></tr>
+</table>
+<h2>0. Important: GitHub Actions was blocked by an account billing lock</h2>
+<p>The course pipeline runs on GitHub Actions. On this account every Actions job was refused before it started:</p>
+<pre>The job was not started because your account is locked due to a billing issue.</pre>
+<p>The run (PR #1, <code>ci.yml</code>) was attempted 6 times on 12 Nov (the original run plus 5 re-runs, the last at 16:15 UTC); each attempt failed in under 10 s with no log. We checked the billing pages: plan <b>GitHub Free</b>, $0 usage, $0 of $12 included compute used, <b>no payment method and no payment history</b>, repository public. The only unusual setting is five account budgets at <b>$0.00 marked "Usage blocked"</b> (Actions, Packages, Codespaces, Git LFS, AI credits). The lock is an account flag on GitHub's side; a support request is the follow-up. Full write-up: <code>evidence/6.7/github-actions-billing-lock.md</code>.</p>
+<figure><img src="../../evidence/6.7/screenshots/00-actions-billing-lock.jpg" alt="GitHub Actions run refused: account locked due to a billing issue"></figure>
+<figure><img src="../../evidence/6.7/screenshots/00-billing-budgets.jpg" alt="Billing budgets: five $0 budgets marked Usage blocked"></figure>
+<p><b>Workaround (same stages, no GitHub Actions):</b> the pipeline runs on <b>Render's Git-backed build</b>, which is still fully automatic: nobody ever deploys by hand.</p>
+<table><tr><th>Course stage (GitHub Actions)</th><th>What runs instead</th></tr>
+<tr><td><code>test</code> job</td><td>A <code>test</code> stage inside <code>Dockerfile.prod</code>: <code>python train.py</code> then <code>pytest -v</code> against the exact code and model that will ship. The runtime stage copies a marker file from it, so <b>no green tests, no image, no deploy</b>.</td></tr>
+<tr><td><code>build-and-push</code> to GHCR</td><td>Render builds <code>Dockerfile.prod</code> from the repository on every commit to <code>main</code> (GHCR is pushed from Actions, so it is unavailable too)</td></tr>
+<tr><td><code>deploy</code> (deploy hook)</td><td>Render <b>Auto-Deploy: On Commit</b></td></tr>
+<tr><td><code>verify</code> (<code>/health</code> shows the SHA)</td><td>Render's health check on <code>/health</code> gates every release; <code>/health</code> reports <code>git_sha</code> from <code>RENDER_GIT_COMMIT</code>; <code>scripts/verify.sh</code> waits until the live SHA equals the merged commit and prints the merge-to-live time</td></tr>
+<tr><td>Branch protection requiring <code>test</code></td><td><b>Not possible</b> without a CI status check. All changes still went through pull requests (#1 to #6).</td></tr>
+</table>
+<p><code>ci.yml</code> and <code>publish.yml</code> stay in the repository unchanged, so the course pipeline (and branch protection) can be switched on as soon as GitHub lifts the lock.</p>
+<h2>1. Requirements and evidence</h2>
+<table><tr><th>Requirement</th><th>Modules</th><th>Evidence</th><th>Status</th></tr>
+<tr><td>Live <code>/openapi.json</code> matches the contract</td><td>2, 3</td><td>§2 side-by-side comparison</td><td>Met (deliberate differences explained)</td></tr>
+<tr><td>All tests pass in CI; main is protected</td><td>3, 6</td><td>§3: tests run in every Render build (8 passed); a failing test blocked a release</td><td>Partly: CI runs in the build; branch protection impossible while Actions is locked (§0)</td></tr>
+<tr><td>Hardened production image stamped with its commit SHA</td><td>4, 6</td><td>§3: multi-stage, slim, non-root, health-checked image; <code>/health</code> returns <code>git_sha</code></td><td>Met (no registry tags: GHCR blocked, Render stores the image)</td></tr>
+<tr><td>Tracked runs, registered champion, promotion memo</td><td>5</td><td>§4 (from Task 5.7)</td><td>Met</td></tr>
+<tr><td>Automatic deploy and verify on every merge</td><td>6</td><td>§3: deploy history and <code>verify.sh</code> logs</td><td>Met (verify run from the terminal, not a CI job)</td></tr>
+<tr><td>API key in a Render env var; HTTPS graded</td><td>6</td><td>§5: three checks, SSL Labs <b>A</b></td><td>Met</td></tr>
+<tr><td>A deliberate bad release caught or rolled back</td><td>6</td><td>§6: part 1 stopped by tests; part 2 rolled back in 48 s; new test added</td><td>Met</td></tr>
+<tr><td>Drift monitoring with an alert threshold</td><td>5</td><td>§4 (drift chart and alert plan)</td><td>Met</td></tr>
+</table>
+<h2>2. Step 1: Foundations, live <code>/openapi.json</code> vs the Module 2 contract</h2>
+<p>Contract: Task 2.7 <code>loan-api.yaml</code> (OpenAPI 3.0.3). Live: <code>https://loan-api-cheapanha.onrender.com/openapi.json</code> (saved as <code>evidence/6.7/live-openapi.json</code>).</p>
+<table><tr><th>Contract (Module 2)</th><th>Live service</th><th>Result</th></tr>
+<tr><td><code>POST /applications</code>: 201 + <code>Application</code> + <code>Location</code>, 422 on a business rule</td><td><code>POST /api/v1/applications</code>: 201 + <code>Application</code>, 422 when <code>amount_usd</code> &gt; 5000; <code>Location</code> added in PR #2</td><td><b>Match</b> (after PR #2)</td></tr>
+<tr><td><code>GET /applications</code> (paged <code>ApplicationList</code>, <code>next_cursor</code>)</td><td><code>GET /api/v1/applications</code> returns a plain list</td><td><b>Changed on purpose</b>: in-memory store, no pagination yet</td></tr>
+<tr><td><code>GET /applications/{application_id}</code>: 200 / 404</td><td>same path under <code>/api/v1</code>: 200 / 404</td><td><b>Match</b></td></tr>
+<tr><td><code>PATCH /applications/{application_id}</code> (approve / reject, 409)</td><td>not implemented</td><td><b>Deferred</b>: manager dashboard out of scope</td></tr>
+<tr><td><code>GET /borrowers/{borrower_id}/applications</code></td><td>not implemented</td><td><b>Deferred</b>: needs the PostgreSQL store</td></tr>
+<tr><td><code>POST /applications/{id}/predictions</code></td><td><code>POST /api/v1/predictions</code> scores features directly; each application embeds its <code>prediction</code></td><td><b>Changed on purpose</b> (Module 3 design)</td></tr>
+<tr><td><code>ApplicationCreate</code> requires <code>borrower_id</code>, <code>amount_usd</code>, <code>term_months</code></td><td>also requires the three other model features</td><td><b>Changed on purpose</b>: the model needs all five</td></tr>
+<tr><td>Limits: <code>amount_usd</code> 100–5000, <code>term_months</code> ∈ {3, 6, 12, 18, 24}</td><td>identical (<code>schemas.py</code>)</td><td><b>Match</b></td></tr>
+<tr><td>Bearer token on every endpoint</td><td><code>X-API-Key</code> on every <code>/api/</code> route; <code>/health</code>, <code>/docs</code> open</td><td><b>Changed on purpose</b>: one service key</td></tr>
+<tr><td>—</td><td><code>GET /health</code> (<code>status</code>, <code>model_version</code>, <code>git_sha</code>)</td><td><b>Added</b> for Render's health check and verify</td></tr>
+</table>
+<h2>3. Step 3: Ship and verify (the pipeline)</h2>
+<p><b>Pipeline:</b> pull request → merge to <code>main</code> → Render clones the commit → <code>Dockerfile.prod</code> stage 1 installs packages and trains the model → <b>stage 2 runs pytest</b> → stage 3 builds the slim non-root runtime image → Render starts it and waits for <code>/health</code> → traffic switches → <code>verify.sh</code> confirms the live <code>git_sha</code>.</p>
+<p><b>The one real improvement (PR #2):</b> the contract requires <code>POST /applications</code> to return a <code>Location</code> header; the service did not. PR #2 added it with a test assertion.</p>
+<pre>$ APP_URL=https://loan-api-cheapanha.onrender.com scripts/verify.sh
+Waiting for https://loan-api-cheapanha.onrender.com to report 7934ac540ec17bdb248847e974d4994ca9f30dca (merged 2026-11-12 23:50:01)
+Live version is &#x27;268c66d374f2dcff511ac7b7219f70d14f460af0&#x27;, waiting (1/45)
+Live version is &#x27;268c66d374f2dcff511ac7b7219f70d14f460af0&#x27;, waiting (2/45)
+Live version is &#x27;268c66d374f2dcff511ac7b7219f70d14f460af0&#x27;, waiting (3/45)
+Deployed and healthy: 7934ac540ec17bdb248847e974d4994ca9f30dca
+Merge to live: 1 min 5 s
+
+$ curl -si -X POST $APP/api/v1/applications -H &#x27;content-type: application/json&#x27; -d &#x27;{&quot;borrower_id&quot;:1042,&quot;amount_usd&quot;:1500,...}&#x27;
+HTTP/2 201
+location: /api/v1/applications/7781</pre>
+<p><b>Merge-to-live times</b> (every merge, measured by <code>verify.sh</code> from the merge commit to the live <code>git_sha</code>):</p>
+<table><tr><th>PR</th><th>Change</th><th>Merge to live</th></tr>
+<tr><td>#2</td><td><code>Location</code> header (the improvement)</td><td><b>1 min 5 s</b></td></tr>
+<tr><td>#3</td><td>drill part 1, broken rule</td><td>never live (build failed at <code>test</code>)</td></tr>
+<tr><td>#4</td><td>revert of #3</td><td>1 min 4 s</td></tr>
+<tr><td>#5</td><td>drill part 2, inverted score</td><td>1 min 5 s</td></tr>
+<tr><td>#6</td><td>fix forward + new test</td><td>1 min 10 s</td></tr>
+</table>
+<figure><img src="../../evidence/6.7/screenshots/07-render-deploy-history.jpg" alt="Render deploy history: every deploy comes from a merge (Auto-Deploy) or the rollback"></figure>
+<p><b>Hardened image, stamped with its commit:</b> <code>Dockerfile.prod</code> is multi-stage (<code>python:3.12-slim</code>), applies Debian security updates, runs as non-root <code>appuser</code> (uid 10001), ships only <code>main.py</code>, <code>schemas.py</code>, the venv and the model (no MLflow, no tests, no secrets), and has a <code>HEALTHCHECK</code>. Locally it uses about 141 MiB, well under Render's 512 MB. <code>/health</code> reports the commit:</p>
+<pre>{&quot;status&quot;:&quot;ok&quot;,&quot;model_version&quot;:&quot;1.0.0&quot;,&quot;git_sha&quot;:&quot;771b35729380301e28e23b13a3d323ee0badbeda&quot;}</pre>
+<h2>4. Step 2: The model lifecycle (Module 5, Task 5.7)</h2>
+<p>From <code>report/submission_sokcheapanha_5.7.pdf</code> in the repository:</p>
+<p>- <b>Eight tracked runs, three model types</b> (logistic regression, random forest, gradient boosting), each logging parameters, AUC, recall, precision, the ROC curve and the model with its signature.</p>
+<p>- <b>Registered model <code>loan-default</code>:</b> version 1 (balanced logistic regression, recall 0.865, AUC 0.923) is <code>@champion</code>; version 2 (balanced random forest, depth 8, recall 0.788, precision 0.738) is <code>@challenger</code>.</p>
+<p>- <b>Promotion memo:</b> recall is the primary metric because a missed defaulter (lost principal) costs far more than a false alarm (a manual review). The champion catches 86.5% of defaulters against 72–79% for the alternatives at essentially the same AUC.</p>
+<p>- <b>The API in production</b> loads <code>model.joblib</code> trained inside the image (version <code>1.0.0</code>, the same balanced logistic regression, test AUC 0.923); with <code>MLFLOW_TRACKING_URI</code> set it loads <code>models:/loan-default@champion</code> instead (Lesson 6.1).</p>
+<figure><img src="../screenshots/01-experiment-runs.png" alt="MLflow experiment runs"></figure>
+<figure><img src="../screenshots/02-registry.jpg" alt="Registry: champion and challenger"></figure>
+<p><b>Drift monitoring and alert plan:</b> a 14-day simulated drift run (incomes falling $8/day) logged PSI per feature and the mean predicted default.</p>
+<figure><img src="../drift_chart.png" alt="Drift chart with thresholds"></figure>
+<table><tr><th>Signal</th><th>Threshold</th><th>Action</th></tr>
+<tr><td>PSI <code>monthly_income_usd</code></td><td>Warn &gt; 0.1 for 2 days (fired day 7)</td><td>Notify the team, check field reports</td></tr>
+<tr><td>PSI <code>monthly_income_usd</code></td><td>Alert &gt; 0.2 for 2 days (fired day 9)</td><td>Retrain, register a new <code>@challenger</code>, compare, promote</td></tr>
+<tr><td>Mean predicted default</td><td>Alert &gt; 0.40 for 2 days (fired day 10)</td><td>Tell credit managers, review approval limits</td></tr>
+<tr><td>Recall on arrived outcomes</td><td>Alert if &lt; 0.80 (monthly)</td><td>Retrain or promote the challenger</td></tr>
+</table>
+<h2>5. Step 4: Secure</h2>
+<p>The API key is generated with <code>secrets.token_urlsafe(32)</code> and stored only in <b>Render → Environment → <code>API_KEY</code></b> (and the student's password store). It is in no file, no image and no log.</p>
+<pre># Lesson 6.6 checks against https://loan-api-cheapanha.onrender.com (2026-11-12 17:00:16 UTC)
+$ curl -s $APP/health                                   # open: always 200
+{&quot;status&quot;:&quot;ok&quot;,&quot;model_version&quot;:&quot;1.0.0&quot;,&quot;git_sha&quot;:&quot;7934ac540ec17bdb248847e974d4994ca9f30dca&quot;}  -&gt; HTTP 200
+$ curl -s $APP/api/v1/applications                      # no key: 401
+{&quot;detail&quot;:&quot;Missing or invalid API key&quot;}  -&gt; HTTP 401
+$ curl -s -H &quot;X-API-Key: wrong&quot; $APP/api/v1/applications  # wrong key: 401
+{&quot;detail&quot;:&quot;Missing or invalid API key&quot;}  -&gt; HTTP 401
+$ curl -s -H &quot;X-API-Key: $KEY&quot; $APP/api/v1/applications   # with the key: 200
+[]  -&gt; HTTP 200</pre>
+<p><b>SSL Labs:</b> overall grade <b>A</b> on both Render endpoints (216.24.57.16 and 216.24.57.18); TLS 1.2 and TLS 1.3 only; certificate issued by Google Trust Services (WE1), valid until 20 Dec 2026 and renewed automatically by Render (<code>evidence/6.7/step4-ssllabs.json</code>).</p>
+<p><b>No secrets anywhere:</b> the key string occurs 0 times in the full Git history and the working tree; no deploy-hook URL, <code>.env</code>, database or model file is committed; the image's environment contains only <code>MODEL_PATH</code> and <code>GIT_SHA</code>; GitGuardian on PR #1 reported "No secrets detected".</p>
+<h2>6. Step 5: Break and recover (bad release drill)</h2>
+<h3>Part 1: a break the tests check, stopped by the pipeline</h3>
+<p>PR #3 changed <code>le=5000</code> to <code>le=9000</code> in <code>schemas.py</code> and was merged (<code>bec4281</code>, 17:01:40 UTC). Render's build ran the test stage and failed; the release never reached users and production stayed on <code>7934ac5</code>.</p>
+<pre>FAILED tests/test_api.py::test_amount_above_limit_is_rejected - AssertionError
+1 failed, 6 passed in 2.62s
+error: failed to solve: process &quot;/bin/sh -c MODEL_PATH=/build/model.joblib python -m pytest -v &amp;&amp; touch /tests-passed&quot; did not complete successfully: exit code 1
+$ curl -s $APP/health   -&gt;  {&quot;status&quot;:&quot;ok&quot;,&quot;model_version&quot;:&quot;1.0.0&quot;,&quot;git_sha&quot;:&quot;7934ac5...&quot;}</pre>
+<figure><img src="../../evidence/6.7/screenshots/05a-drill1-render-deploy-failed.jpg" alt="Render: Deploy failed for bec4281 while building; service still live on 7934ac5"></figure>
+<figure><img src="../../evidence/6.7/screenshots/05b-drill1-build-log-pytest-failed.jpg" alt="Build log: pytest failed inside the Docker build"></figure>
+<p>PR #4 reverted it (live in 1 min 4 s).</p>
+<h3>Part 2: a break the tests do not check, rolled back</h3>
+<p>PR #5 made <code>score</code> return <code>round(1 - probability, 3)</code>. All 7 tests still passed, so it shipped.</p>
+<table><tr><th>Time (UTC)</th><th>Event</th><th>Safe applicant (1500 USD, 12 m, income 350, 0 late)</th><th>Risky applicant (5000 USD, 3 m, income 200, 4 late)</th></tr>
+<tr><td>17:08:07</td><td>Before (live <code>646bfaf</code>)</td><td>0.095, low</td><td>1.0, high</td></tr>
+<tr><td>17:09:04</td><td>PR #5 merged</td><td></td><td></td></tr>
+<tr><td>17:10:09</td><td>Bad release live (<code>6316fd7</code>), <b>merge to live 1 min 5 s</b></td><td><b>0.905, low</b> (probability and band disagree)</td><td><b>0.0, high</b></td></tr>
+<tr><td>17:10:48</td><td>Rollback clicked in Render's Events tab (to <code>646bfaf</code>)</td><td></td><td></td></tr>
+<tr><td>17:11:36</td><td>Recovered, <b>rollback to recovered 48 s</b></td><td>0.095, low</td><td>1.0, high</td></tr>
+<tr><td>17:14:52</td><td>Fix forward PR #6 live (<code>771b357</code>, 1 min 10 s)</td><td>0.095, low</td><td>1.0, high</td></tr>
+</table>
+<p>The wrong version was live for 1 min 27 s in total. Render disables auto-deploy after a rollback; it was switched back to <b>On Commit</b> before the fix was merged.</p>
+<figure><img src="../../evidence/6.7/screenshots/06-drill2-render-rollback.jpg" alt="Render Events: bad release, rollback by the student, recovered"></figure>
+<p><b>The real fix: a test that would have caught it (PR #6).</b></p>
+<pre>def test_risky_applicant_scores_higher_than_safe_applicant(client):
+    safe = client.post(&quot;/api/v1/predictions&quot;, json=GOOD).json()
+    risky = client.post(&quot;/api/v1/predictions&quot;, json=RISKY).json()
+    assert risky[&quot;default_probability&quot;] &gt; safe[&quot;default_probability&quot;]
+    assert safe[&quot;risk_band&quot;] == &quot;low&quot; and safe[&quot;default_probability&quot;] &lt; 0.2
+    assert risky[&quot;risk_band&quot;] == &quot;high&quot; and risky[&quot;default_probability&quot;] &gt;= 0.5</pre>
+<pre># re-applying the inverted line locally:
+FAILED tests/test_api.py::test_risky_applicant_scores_higher_than_safe_applicant
+1 failed, 7 passed
+# with the fix: 8 passed</pre>
+<p>Because the tests run inside the Docker build, the same mistake can no longer reach production.</p>
+<h2>7. Step 6: Presentation</h2>
+<p>The 5-minute slides are submitted separately (<code>slides_sokcheapanha_6.7.pdf</code>): architecture, one design decision, one trade-off, and what comes next.</p>
+<h2>8. Assessment criteria checklist</h2>
+<table><tr><th>Criterion</th><th>How it is met</th></tr>
+<tr><td>Every requirement met, with evidence</td><td>§1 table; partial items explained by the GitHub billing lock (§0)</td></tr>
+<tr><td>Deployed only by the pipeline, never by hand</td><td>Every deploy in Render's history is Auto-Deploy from a merge, plus the drill rollback (screenshot §3). No manual deploy, no <code>docker push</code>, no deploy hook was used.</td></tr>
+<tr><td>No secrets in the repository, the images or the logs</td><td>§5 scan: 0 occurrences; key only in Render's environment</td></tr>
+<tr><td>The bad release was caught or rolled back, and a test now prevents it</td><td>§6: part 1 blocked by tests; part 2 rolled back in 48 s; new test fails on the bug</td></tr>
+</table>
+<p><b>Teardown</b> (after assessment, Lesson 6.7 Hands-on 2): delete the Render service, remove the <code>API_KEY</code>, keep the repository as a portfolio.</p>

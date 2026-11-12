@@ -1,0 +1,9 @@
+# Lesson 6.6 checks against https://loan-api-cheapanha.onrender.com (2026-11-12 17:00:16 UTC). KEY is read from ~/.loan-api-key and never printed.
+$ curl -s $APP/health                                   # open: always 200
+{"status":"ok","model_version":"1.0.0","git_sha":"7934ac540ec17bdb248847e974d4994ca9f30dca"}  -> HTTP 200
+$ curl -s -o /dev/null -w "%{http_code}" $APP/api/v1/applications   # no key: 401
+{"detail":"Missing or invalid API key"}  -> HTTP 401
+$ curl -s -H "X-API-Key: wrong" $APP/api/v1/applications  # wrong key: 401
+{"detail":"Missing or invalid API key"}  -> HTTP 401
+$ curl -s -H "X-API-Key: $KEY" $APP/api/v1/applications   # with the key: 200
+[]  -> HTTP 200

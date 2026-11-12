@@ -1,0 +1,6 @@
+Drill part 1: PR #3 (le=9000) merged as bec4281 at 17:01:40 UTC
+Render: 'Deploy failed for bec4281 ... Exited with status 1 while building your code' (12:02 AM GMT+7 = 17:02 UTC)
+Build log: FAILED tests/test_api.py::test_amount_above_limit_is_rejected; 1 failed, 6 passed; error: exit status 1
+$ curl -s $APP/health  (after the failed build)
+{"status":"ok","model_version":"1.0.0","git_sha":"7934ac540ec17bdb248847e974d4994ca9f30dca"}
+=> production stayed on 7934ac5; the broken rule never reached users
