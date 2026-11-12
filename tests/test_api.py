@@ -34,6 +34,7 @@ def test_create_and_read_application(client):
     created = client.post("/api/v1/applications", json={**GOOD, "borrower_id": 1042})
     assert created.status_code == 201
     app_id = created.json()["id"]
+    assert created.headers["location"] == f"/api/v1/applications/{app_id}"  # the contract's Location header
     assert client.get(f"/api/v1/applications/{app_id}").json()["borrower_id"] == 1042
 
 
