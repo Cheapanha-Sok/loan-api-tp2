@@ -1,4 +1,4 @@
-"""Run with: MLFLOW_TRACKING_URI=http://127.0.0.1:5000 pytest -v (tracking server running)"""
+"""Run with: python train.py && pytest -v  (or with MLFLOW_TRACKING_URI set to use the registry)"""
 import pytest
 from fastapi.testclient import TestClient
 
@@ -17,7 +17,7 @@ def client():
 def test_health_reports_model_version(client):
     body = client.get("/health").json()
     assert body["status"] == "ok"
-    assert body["model_version"]  # now comes from the registry, e.g. "1"
+    assert body["model_version"]  # "1.0.0" from the file, or a registry version such as "1"
 
 
 def test_prediction_is_a_probability(client):
